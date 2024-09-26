@@ -139,3 +139,30 @@ async def delete_task(user: user_dependency, db: db_dependency, task_id: int = P
     # Delete the task and commit the transaction to the database
     db.delete(task_model)
     db.commit()
+
+
+@router.get("/{task_id}", status_code=status.HTTP_200_OK)
+async def get_task(user: user_dependency, db: db_dependency, task_id: int = Path(gt=0)):
+    """
+    Get a task's details based on its ID.
+
+    Parameters:
+    - **user**: The authenticated user's data (as a dictionary with id, username, role).
+    - **db**: The current database session for updating the task.
+    - **task_request**: Data to update the task, validated using the `TaskRequest` model.
+    - **task_id**: The ID of the task to be updated (must be greater than 0).
+
+    Process:
+    - Finds the task by its ID and the user's ID.
+
+    Raises:
+    - HTTP 404: If the task is not found.
+    """
+    # Query the task from the database based on task ID and user's ownership
+    task_model = db.query(Task).filter(Task.id == task_id, Task.owner_id == user['id']).first()
+
+    # If task is not found, raise a 404 HTTP exception
+    if task_model is None:
+        raise HTTPException(status_code=404, detail='Task not found')
+
+    return task_model
